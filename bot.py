@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import logging
 from config import Colors
 
-# Load environment variables from .env file
+# Load environment variables from .env file or environment
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -23,8 +23,13 @@ if not TOKEN:
     except Exception as e:
         logger.error(f"Failed to read .env file: {e}")
 
+# Check if token is still missing
+if not TOKEN:
+    logger.error("❌ DISCORD_TOKEN not found in environment variables or .env file!")
+    raise ValueError("DISCORD_TOKEN is required but not set")
+
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Bot setup
@@ -63,6 +68,8 @@ async def on_ready():
 async def on_command_error(ctx, error):
     """Handle command errors."""
     
+    logger.error(f"Command error: {error} - Type: {type(error).__name__}")
+    
     if isinstance(error, commands.MissingPermissions):
         embed = discord.Embed(
             title="❌ Permission Denied",
@@ -87,11 +94,19 @@ async def on_command_error(ctx, error):
         )
         await ctx.send(embed=embed, delete_after=5)
     
+    elif isinstance(error, commands.MemberNotFound):
+        embed = discord.Embed(
+            title="❌ Member Not Found",
+            description="The specified member could not be found.",
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=embed, delete_after=5)
+    
     else:
-        logger.error(f"Unhandled error: {error}")
+        logger.error(f"Unhandled error: {error}", exc_info=True)
         embed = discord.Embed(
             title="❌ An Error Occurred",
-            description="An unexpected error occurred. Please try again later.",
+            description=f"An unexpected error occurred: {str(error)}",
             color=discord.Color.red()
         )
         await ctx.send(embed=embed, delete_after=5)
@@ -100,6 +115,8 @@ async def on_command_error(ctx, error):
 @bot.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     """Handle slash command errors."""
+    
+    logger.error(f"Slash command error: {error} - Type: {type(error).__name__}")
     
     if isinstance(error, app_commands.MissingPermissions):
         embed = discord.Embed(
@@ -112,7 +129,7 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
     elif isinstance(error, app_commands.BotMissingPermissions):
         embed = discord.Embed(
             title="❌ Bot Permission Missing",
-            description="I don't have the required permissions to perform this action.",
+            description=f"I don't have the required permissions to perform this action.",
             color=discord.Color.red()
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -126,16 +143,19 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
         await interaction.response.send_message(embed=embed, ephemeral=True)
     
     else:
-        logger.error(f"Slash command error: {error}")
+        logger.error(f"Slash command error: {error}", exc_info=True)
         embed = discord.Embed(
             title="❌ An Error Occurred",
-            description="An unexpected error occurred. Please try again later.",
+            description=f"An unexpected error occurred: {str(error)}",
             color=discord.Color.red()
         )
         try:
             await interaction.response.send_message(embed=embed, ephemeral=True)
         except:
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            try:
+                await interaction.followup.send(embed=embed, ephemeral=True)
+            except:
+                logger.error("Failed to send error message to user")
 
 
 async def load_cogs():
