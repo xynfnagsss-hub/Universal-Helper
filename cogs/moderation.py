@@ -195,7 +195,7 @@ class Moderation(commands.Cog):
         
         embed.add_field(name="👤 Moderator", value=f"{ctx.author.mention}", inline=True)
         embed.add_field(name="📝 Reason", value=reason, inline=False)
-        embed.set_thumbnail(url=member.avatar.url)
+        embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
         
         # Unmute the member
         await member.timeout(None, reason=reason)
@@ -314,7 +314,7 @@ class Moderation(commands.Cog):
                 inline=False
             )
         
-        embed.set_thumbnail(url=member.avatar.url)
+        embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
         embed.set_footer(text=f"User ID: {member.id}")
         
         await ctx.send(embed=embed)
@@ -342,7 +342,7 @@ class Moderation(commands.Cog):
             embed.add_field(name="👤 Moderator", value=f"{ctx.author.mention}", inline=True)
             embed.add_field(name="⚠️ Previous Count", value=f"`{old_count}`", inline=True)
             embed.add_field(name="📝 New Count", value=f"`0`", inline=True)
-            embed.set_thumbnail(url=member.avatar.url)
+            embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
             embed.set_footer(text=f"User ID: {member.id}")
             
             await ctx.send(embed=embed)
@@ -539,7 +539,7 @@ class Moderation(commands.Cog):
         
         embed.add_field(name="👤 Moderator", value=f"{interaction.user.mention}", inline=True)
         embed.add_field(name="📝 Reason", value=reason, inline=False)
-        embed.set_thumbnail(url=member.avatar.url)
+        embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
         
         await member.timeout(None, reason=reason)
         confirmation = create_confirmation_embed("Unmuted", member, "success")
@@ -643,7 +643,7 @@ class Moderation(commands.Cog):
                 inline=False
             )
         
-        embed.set_thumbnail(url=member.avatar.url)
+        embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
         embed.set_footer(text=f"User ID: {member.id}")
         
         await interaction.response.send_message(embed=embed)
@@ -675,7 +675,7 @@ class Moderation(commands.Cog):
             embed.add_field(name="👤 Moderator", value=f"{interaction.user.mention}", inline=True)
             embed.add_field(name="⚠️ Previous Count", value=f"`{old_count}`", inline=True)
             embed.add_field(name="📝 New Count", value=f"`0`", inline=True)
-            embed.set_thumbnail(url=member.avatar.url)
+            embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
             embed.set_footer(text=f"User ID: {member.id}")
             
             await interaction.response.send_message(embed=embed)

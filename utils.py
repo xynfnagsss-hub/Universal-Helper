@@ -45,7 +45,7 @@ def create_action_embed(
         inline=False
     )
     
-    embed.set_thumbnail(url=target_user.avatar.url)
+    embed.set_thumbnail(url=target_user.avatar.url if target_user.avatar else target_user.default_avatar.url)
     embed.set_footer(
         text=f"User ID: {target_user.id}",
         icon_url="https://cdn.discordapp.com/embed/avatars/0.png"
@@ -71,7 +71,7 @@ def create_confirmation_embed(
         timestamp=datetime.now()
     )
     
-    embed.set_thumbnail(url=target_user.avatar.url)
+    embed.set_thumbnail(url=target_user.avatar.url if target_user.avatar else target_user.default_avatar.url)
     
     return embed
 
@@ -95,7 +95,7 @@ def create_warn_embed(
     embed.add_field(name="👤 Moderator", value=f"{moderator.mention}", inline=True)
     embed.add_field(name="📝 Reason", value=reason, inline=False)
     
-    embed.set_thumbnail(url=target_user.avatar.url)
+    embed.set_thumbnail(url=target_user.avatar.url if target_user.avatar else target_user.default_avatar.url)
     embed.set_footer(text=f"User ID: {target_user.id}")
     
     return embed
@@ -173,7 +173,7 @@ def create_moderation_log_embed(
             inline=True
         )
     
-    embed.set_thumbnail(url=target_user.avatar.url)
+    embed.set_thumbnail(url=target_user.avatar.url if target_user.avatar else target_user.default_avatar.url)
     embed.set_footer(text=f"ID: {target_user.id}")
     
     return embed
