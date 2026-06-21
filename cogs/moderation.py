@@ -10,6 +10,9 @@ from utils import (
     create_moderation_log_embed
 )
 from datetime import timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Moderation(commands.Cog):
@@ -58,32 +61,37 @@ class Moderation(commands.Cog):
     async def ban(self, ctx, member: discord.Member, *, reason="No reason provided"):
         """Ban a member from the server."""
         
-        if member == ctx.author:
-            embed = create_error_embed("You cannot ban yourself!")
-            return await ctx.send(embed=embed, delete_after=5)
-        
-        if member.top_role >= ctx.author.top_role:
-            embed = create_error_embed("You cannot ban someone with an equal or higher role!")
-            return await ctx.send(embed=embed, delete_after=5)
-        
-        # Create action embed
-        embed = create_action_embed(
-            action="Member Banned",
-            target_user=member,
-            moderator=ctx.author,
-            reason=reason,
-            color=Colors.DANGER
-        )
-        
-        # Ban the member
-        await member.ban(reason=reason)
-        
-        # Send confirmation
-        confirmation = create_confirmation_embed("Banned", member, "success")
-        await ctx.send(embed=confirmation)
-        
-        # Log to moderation logs
-        await self.log_action(embed, ctx.guild)
+        try:
+            if member == ctx.author:
+                embed = create_error_embed("You cannot ban yourself!")
+                return await ctx.send(embed=embed, delete_after=5)
+            
+            if member.top_role >= ctx.author.top_role:
+                embed = create_error_embed("You cannot ban someone with an equal or higher role!")
+                return await ctx.send(embed=embed, delete_after=5)
+            
+            # Create action embed
+            embed = create_action_embed(
+                action="Member Banned",
+                target_user=member,
+                moderator=ctx.author,
+                reason=reason,
+                color=Colors.DANGER
+            )
+            
+            # Ban the member
+            await member.ban(reason=reason)
+            
+            # Send confirmation
+            confirmation = create_confirmation_embed("Banned", member, "success")
+            await ctx.send(embed=confirmation)
+            
+            # Log to moderation logs
+            await self.log_action(embed, ctx.guild)
+        except Exception as e:
+            logger.error(f"Error in ban command: {e}", exc_info=True)
+            embed = create_error_embed(f"An error occurred: {str(e)}")
+            await ctx.send(embed=embed, delete_after=5)
     
     @commands.command(name="warn")
     @commands.has_permissions(manage_messages=True)
