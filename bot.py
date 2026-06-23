@@ -62,6 +62,16 @@ async def on_ready():
             name="🛡️ server safety | !help | /help"
         )
     )
+    
+    # Send test message to log channel
+    log_channel_id = 1518955819691937882
+    log_channel = bot.get_channel(log_channel_id)
+    if log_channel:
+        try:
+            await log_channel.send("✅ Bot is online and logging is working!")
+            logger.info(f"✅ Test message sent to log channel")
+        except Exception as e:
+            logger.error(f"Failed to send test message: {e}")
 
 
 @bot.event
