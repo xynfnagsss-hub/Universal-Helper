@@ -65,6 +65,30 @@ async def on_ready():
 
 
 @bot.event
+async def on_member_remove(member):
+    """Called when a member leaves the server."""
+    log_channel_id = 1518955819691937882
+    log_channel = bot.get_channel(log_channel_id)
+    
+    if log_channel:
+        embed = discord.Embed(
+            title="👋 Member Left",
+            description=f"{member.mention} has left the server.",
+            color=Colors.DANGER,
+            timestamp=discord.utils.utcnow()
+        )
+        embed.add_field(name="User", value=f"{member} (`{member.id}`)", inline=True)
+        embed.add_field(name="Joined", value=f"<t:{int(member.joined_at.timestamp())}:R>", inline=True)
+        embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
+        embed.set_footer(text=f"User ID: {member.id}")
+        
+        try:
+            await log_channel.send(embed=embed)
+        except Exception as e:
+            logger.error(f"Failed to log member leave: {e}")
+
+
+@bot.event
 async def on_command_error(ctx, error):
     """Handle command errors."""
     
