@@ -230,7 +230,8 @@ async def help_command(ctx):
               "`!clear [amount]` - Clear messages (1-100)\n"
               "`!purge [amount] [@user] [--content text]` - Advanced message purge\n"
               "`!warnings [member]` - Check warnings\n"
-              "`!clearwarnings [@user]` - Clear warnings (all if no user)",
+              "`!clearwarnings [@user]` - Clear warnings (all if no user)\n"
+              "`!steal <emoji> [name]` - Add a custom emoji to this server",
         inline=False
     )
     
@@ -245,7 +246,10 @@ async def help_command(ctx):
               "`/clear` - Clear messages\n"
               "`/purge` - Advanced message purge\n"
               "`/warnings` - Check warnings\n"
-              "`/clearwarnings` - Clear warnings",
+              "`/clearwarnings` - Clear warnings\n"
+              "`/verification_setup` - Create verification channel/button\n"
+              "`/verification_lockdown` - Hide channels from unverified members\n"
+              "`/steal_emoji` - Add a custom emoji to this server",
         inline=False
     )
     
@@ -265,6 +269,7 @@ async def help_command(ctx):
         value="• All moderation actions are logged to `#moderation-logs`\n"
               "• Create a `#moderation-logs` channel for logging\n"
               "• Use either prefix (!) or slash (/) commands\n"
+              "• Verification settings work separately in every server\n"
               "• Only users with moderation permissions can use these commands",
         inline=False
     )
