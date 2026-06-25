@@ -14,6 +14,7 @@ class Colors:
 class Emojis:
     KICK = "🦶"
     BAN = "🔨"
+    UNBAN = "🔓"
     WARN = "⚠️"
     MUTE = "🔇"
     UNMUTE = "🔊"

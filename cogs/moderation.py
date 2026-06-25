@@ -93,6 +93,48 @@ class Moderation(commands.Cog):
             embed = create_error_embed(f"An error occurred: {str(e)}")
             await ctx.send(embed=embed, delete_after=5)
     
+    @commands.command(name="unban")
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def unban(self, ctx, user_id: int, *, reason="No reason provided"):
+        """Unban a user from the server."""
+        
+        try:
+            # Try to get the banned user
+            banned_users = await ctx.guild.bans()
+            banned_user = discord.utils.find(lambda u: u.user.id == user_id, banned_users)
+            
+            if not banned_user:
+                embed = create_error_embed("User is not banned or ID is invalid!")
+                return await ctx.send(embed=embed, delete_after=5)
+            
+            # Create action embed
+            embed = discord.Embed(
+                title=f"{Emojis.UNBAN} Member Unbanned",
+                description=f"**User:** {banned_user.user} (`{banned_user.user.id}`)",
+                color=Colors.SUCCESS,
+                timestamp=discord.utils.utcnow()
+            )
+            
+            embed.add_field(name="👤 Moderator", value=f"{ctx.author.mention}", inline=True)
+            embed.add_field(name="📝 Reason", value=reason, inline=False)
+            embed.set_thumbnail(url=banned_user.user.avatar.url if banned_user.user.avatar else banned_user.user.default_avatar.url)
+            embed.set_footer(text=f"User ID: {banned_user.user.id}")
+            
+            # Unban the user
+            await ctx.guild.unban(banned_user.user, reason=reason)
+            
+            # Send confirmation
+            confirmation = create_confirmation_embed("Unbanned", banned_user.user, "success")
+            await ctx.send(embed=confirmation)
+            
+            # Log to moderation logs
+            await self.log_action(embed, ctx.guild)
+        except Exception as e:
+            logger.error(f"Error in unban command: {e}", exc_info=True)
+            embed = create_error_embed(f"An error occurred: {str(e)}")
+            await ctx.send(embed=embed, delete_after=5)
+    
     @commands.command(name="warn")
     @commands.has_permissions(manage_messages=True)
     async def warn(self, ctx, member: discord.Member, *, reason="No reason provided"):
