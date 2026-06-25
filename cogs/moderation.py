@@ -108,19 +108,6 @@ class Moderation(commands.Cog):
                 embed = create_error_embed("User is not banned or ID is invalid!")
                 return await ctx.send(embed=embed, delete_after=5)
             
-            # Create action embed
-            embed = discord.Embed(
-                title=f"{Emojis.UNBAN} Member Unbanned",
-                description=f"**User:** {banned_user.user} (`{banned_user.user.id}`)",
-                color=Colors.SUCCESS,
-                timestamp=discord.utils.utcnow()
-            )
-            
-            embed.add_field(name="👤 Moderator", value=f"{ctx.author.mention}", inline=True)
-            embed.add_field(name="📝 Reason", value=reason, inline=False)
-            embed.set_thumbnail(url=banned_user.user.avatar.url if banned_user.user.avatar else banned_user.user.default_avatar.url)
-            embed.set_footer(text=f"User ID: {banned_user.user.id}")
-            
             # Unban the user
             await ctx.guild.unban(banned_user.user, reason=reason)
             
@@ -128,8 +115,21 @@ class Moderation(commands.Cog):
             confirmation = create_confirmation_embed("Unbanned", banned_user.user, "success")
             await ctx.send(embed=confirmation)
             
+            # Create action embed for logging
+            log_embed = discord.Embed(
+                title=f"{Emojis.UNBAN} Member Unbanned",
+                description=f"**User:** {banned_user.user} (`{banned_user.user.id}`)",
+                color=Colors.SUCCESS,
+                timestamp=discord.utils.utcnow()
+            )
+            
+            log_embed.add_field(name="👤 Moderator", value=f"{ctx.author.mention}", inline=True)
+            log_embed.add_field(name="📝 Reason", value=reason, inline=False)
+            log_embed.set_thumbnail(url=banned_user.user.avatar.url if banned_user.user.avatar else banned_user.user.default_avatar.url)
+            log_embed.set_footer(text=f"User ID: {banned_user.user.id}")
+            
             # Log to moderation logs
-            await self.log_action(embed, ctx.guild)
+            await self.log_action(log_embed, ctx.guild)
         except Exception as e:
             logger.error(f"Error in unban command: {e}", exc_info=True)
             embed = create_error_embed(f"An error occurred: {str(e)}")
