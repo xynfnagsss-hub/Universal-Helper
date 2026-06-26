@@ -768,6 +768,89 @@ class Moderation(commands.Cog):
         
         await interaction.response.send_message(embed=embed)
     
+    @app_commands.command(name="unban", description="Unban a user from the server")
+    @app_commands.describe(user_id="The user ID to unban")
+    @app_commands.checks.has_permissions(ban_members=True)
+    @app_commands.checks.bot_has_permissions(ban_members=True)
+    async def slash_unban(self, interaction: discord.Interaction, user_id: int):
+        """Slash command version of unban."""
+        
+        try:
+            user = await self.bot.fetch_user(user_id)
+            await interaction.guild.unban(user)
+            await interaction.response.send_message(f"✅ Unbanned user {user} ({user_id})")
+        except discord.NotFound:
+            await interaction.response.send_message("❌ User not found", ephemeral=True)
+        except discord.HTTPException as e:
+            await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
+    
+    @app_commands.command(name="loa", description="Put a user on leave of absence")
+    @app_commands.describe(member="The member to put on LOA", reason="Reason for LOA", mute_duration="Mute duration if pinged (e.g., 1h, 30m, 1d)")
+    @app_commands.checks.has_permissions(manage_messages=True)
+    async def slash_loa(self, interaction: discord.Interaction, member: discord.Member, reason: str, mute_duration: str = "1h"):
+        """Slash command version of loa."""
+        
+        if member == interaction.user:
+            await interaction.response.send_message(embed=create_error_embed("You cannot put yourself on LOA!"), ephemeral=True)
+            return
+        
+        if member.bot:
+            await interaction.response.send_message(embed=create_error_embed("You cannot put a bot on LOA!"), ephemeral=True)
+            return
+        
+        # Parse mute duration
+        duration_map = {
+            'm': timedelta(minutes=1),
+            'h': timedelta(hours=1),
+            'd': timedelta(days=1)
+        }
+        
+        try:
+            unit = mute_duration[-1].lower()
+            if unit not in duration_map:
+                raise ValueError("Invalid unit")
+            
+            amount = int(mute_duration[:-1])
+            if amount <= 0:
+                raise ValueError("Invalid amount")
+            
+            mute_td = duration_map[unit] * amount
+        except:
+            await interaction.response.send_message(embed=create_error_embed("Invalid duration! Use format like: 1h, 30m, 1d"), ephemeral=True)
+            return
+        
+        # Add to LOA list with mute duration
+        self.loa_users[member.id] = (interaction.guild.id, mute_td)
+        
+        embed = discord.Embed(
+            title="🏖️ Leave of Absence",
+            description=f"{member.mention} has been put on LOA.",
+            color=Colors.WARNING,
+            timestamp=discord.utils.utcnow()
+        )
+        embed.add_field(name="👤 User", value=member.mention, inline=True)
+        embed.add_field(name="📝 Reason", value=reason, inline=True)
+        embed.add_field(name="⏱️ Mute Duration if Pinged", value=mute_duration, inline=True)
+        embed.add_field(name="⚠️ Warning", value=f"Anyone who pings this user will be muted for {mute_duration}!", inline=False)
+        embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
+        embed.set_footer(text=f"User ID: {member.id}")
+        
+        await interaction.response.send_message(embed=embed)
+    
+    @app_commands.command(name="loa_remove", description="Remove a user from leave of absence")
+    @app_commands.describe(member="The member to remove from LOA")
+    @app_commands.checks.has_permissions(manage_messages=True)
+    async def slash_loa_remove(self, interaction: discord.Interaction, member: discord.Member):
+        """Slash command version of loa_remove."""
+        
+        if member.id in self.loa_users:
+            del self.loa_users[member.id]
+            await interaction.response.send_message(f"✅ Removed {member.mention} from LOA.")
+        else:
+            await interaction.response.send_message("❌ User is not on LOA.", ephemeral=True)
+    
     @app_commands.command(name="clearwarnings", description="Clear warnings for a member or all members")
     @app_commands.describe(member="The member to clear warnings for (optional, clears all if not provided)")
     @app_commands.checks.has_permissions(manage_messages=True)
