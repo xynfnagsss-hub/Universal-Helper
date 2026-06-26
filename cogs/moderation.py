@@ -200,6 +200,31 @@ class Moderation(commands.Cog):
                     logger.info(f"Successfully muted {message.author} for pinging LOA user {user_id}")
                 except Exception as e:
                     logger.error(f"Failed to mute user for LOA ping: {e}", exc_info=True)
+            
+            # Also check for role mentions that might include the LOA user
+            for role in message.role_mentions:
+                try:
+                    # Get the role members
+                    role_members = [m.id for m in role.members]
+                    if user_id in role_members:
+                        logger.info(f"LOA user {user_id} is in mentioned role {role.name}")
+                        try:
+                            await message.author.timeout(mute_duration, reason=f"Pinged role containing LOA user {user_id}")
+                            
+                            duration_str = str(mute_duration)
+                            embed = discord.Embed(
+                                title="🔇 Auto-Mute",
+                                description=f"{message.author.mention} has been muted for {duration_str} for pinging a role containing an LOA user.",
+                                color=Colors.DANGER,
+                                timestamp=discord.utils.utcnow()
+                            )
+                            embed.add_field(name="⚠️ Reason", value="Pinging LOA user via role is not allowed", inline=False)
+                            await message.channel.send(embed=embed)
+                            logger.info(f"Successfully muted {message.author} for pinging role with LOA user {user_id}")
+                        except Exception as e:
+                            logger.error(f"Failed to mute user for LOA role ping: {e}", exc_info=True)
+                except Exception as e:
+                    logger.error(f"Error checking role mentions: {e}")
     
     @commands.command(name="loa_remove")
     @commands.has_permissions(manage_messages=True)
@@ -211,6 +236,28 @@ class Moderation(commands.Cog):
             await ctx.send(f"✅ Removed {member.mention} from LOA.")
         else:
             await ctx.send("❌ User is not on LOA.")
+    
+    @commands.command(name="loa_list")
+    @commands.has_permissions(manage_messages=True)
+    async def loa_list(self, ctx):
+        """List all users on LOA."""
+        
+        if not self.loa_users:
+            await ctx.send("No users are currently on LOA.")
+            return
+        
+        embed = discord.Embed(
+            title="🏖️ Leave of Absence List",
+            description=f"Total: {len(self.loa_users)} users",
+            color=Colors.INFO
+        )
+        
+        for user_id, (guild_id, mute_duration) in self.loa_users.items():
+            user = self.bot.get_user(user_id)
+            if user:
+                embed.add_field(name=f"{user} ({user_id})", value=f"Guild: {guild_id}, Mute: {mute_duration}", inline=False)
+        
+        await ctx.send(embed=embed)
     
     @commands.command(name="warn")
     @commands.has_permissions(manage_messages=True)
