@@ -113,7 +113,7 @@ class Moderation(commands.Cog):
     
     @commands.command(name="loa")
     @commands.has_permissions(manage_messages=True)
-    async def loa(self, ctx, member: discord.Member, mute_duration: str = "1h"):
+    async def loa(self, ctx, member: discord.Member, reason: str, mute_duration: str = "1h"):
         """Put a user on leave of absence (no pings allowed, auto-mute if pinged)."""
         
         if member == ctx.author:
@@ -155,6 +155,7 @@ class Moderation(commands.Cog):
             timestamp=discord.utils.utcnow()
         )
         embed.add_field(name="👤 User", value=member.mention, inline=True)
+        embed.add_field(name="📝 Reason", value=reason, inline=True)
         embed.add_field(name="⏱️ Mute Duration if Pinged", value=mute_duration, inline=True)
         embed.add_field(name="⚠️ Warning", value=f"Anyone who pings this user will be muted for {mute_duration}!", inline=False)
         embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
