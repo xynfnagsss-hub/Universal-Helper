@@ -171,13 +171,20 @@ class Moderation(commands.Cog):
         if message.author.bot or not message.guild:
             return
         
+        logger.info(f"Checking message from {message.author} in {message.guild.id}")
+        logger.info(f"LOA users: {self.loa_users}")
+        logger.info(f"Mentions: {[u.id for u in message.mentions]}")
+        
         # Check if message mentions any LOA users
         for user_id, (guild_id, mute_duration) in list(self.loa_users.items()):
+            logger.info(f"Checking LOA user {user_id} in guild {guild_id}")
             if guild_id != message.guild.id:
+                logger.info(f"Guild mismatch: {guild_id} != {message.guild.id}")
                 continue
             
             # Check if user is mentioned
             if any(user.id == user_id for user in message.mentions):
+                logger.info(f"User {user_id} was mentioned by {message.author}")
                 # Mute the person who pinged
                 try:
                     await message.author.timeout(mute_duration, reason=f"Pinged LOA user {user_id}")
@@ -191,8 +198,9 @@ class Moderation(commands.Cog):
                     )
                     embed.add_field(name="⚠️ Reason", value="Pinging LOA user is not allowed", inline=False)
                     await message.channel.send(embed=embed)
+                    logger.info(f"Successfully muted {message.author} for pinging LOA user {user_id}")
                 except Exception as e:
-                    logger.error(f"Failed to mute user for LOA ping: {e}")
+                    logger.error(f"Failed to mute user for LOA ping: {e}", exc_info=True)
     
     @commands.command(name="loa_remove")
     @commands.has_permissions(manage_messages=True)
