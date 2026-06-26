@@ -112,13 +112,12 @@ class Moderation(commands.Cog):
             await ctx.send(f"❌ Error: {e}")
     
     @commands.command(name="loa")
-    @commands.has_permissions(manage_messages=True)
-    async def loa(self, ctx, member: discord.Member, reason: str, mute_duration: str = "1h"):
+    async def loa(self, ctx, member: discord.Member = None, reason: str = "No reason provided", mute_duration: str = "1h"):
         """Put a user on leave of absence (no pings allowed, auto-mute if pinged)."""
         
-        if member == ctx.author:
-            embed = create_error_embed("You cannot put yourself on LOA!")
-            return await ctx.send(embed=embed, delete_after=5)
+        # If no member specified, use the author
+        if member is None:
+            member = ctx.author
         
         if member.bot:
             embed = create_error_embed("You cannot put a bot on LOA!")
@@ -795,14 +794,13 @@ class Moderation(commands.Cog):
             await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
     
     @app_commands.command(name="loa", description="Put a user on leave of absence")
-    @app_commands.describe(member="The member to put on LOA", reason="Reason for LOA", mute_duration="Mute duration if pinged (e.g., 1h, 30m, 1d)")
-    @app_commands.checks.has_permissions(manage_messages=True)
-    async def slash_loa(self, interaction: discord.Interaction, member: discord.Member, reason: str, mute_duration: str = "1h"):
+    @app_commands.describe(member="The member to put on LOA (optional, defaults to you)", reason="Reason for LOA", mute_duration="Mute duration if pinged (e.g., 1h, 30m, 1d)")
+    async def slash_loa(self, interaction: discord.Interaction, member: discord.Member = None, reason: str = "No reason provided", mute_duration: str = "1h"):
         """Slash command version of loa."""
         
-        if member == interaction.user:
-            await interaction.response.send_message(embed=create_error_embed("You cannot put yourself on LOA!"), ephemeral=True)
-            return
+        # If no member specified, use the author
+        if member is None:
+            member = interaction.user
         
         if member.bot:
             await interaction.response.send_message(embed=create_error_embed("You cannot put a bot on LOA!"), ephemeral=True)
