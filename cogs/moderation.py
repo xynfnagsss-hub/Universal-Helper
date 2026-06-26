@@ -112,7 +112,7 @@ class Moderation(commands.Cog):
             await ctx.send(f"❌ Error: {e}")
     
     @commands.command(name="loa")
-    async def loa(self, ctx, member: discord.Member = None, reason: str = "No reason provided", mute_duration: str = "1h"):
+    async def loa(self, ctx, member: discord.Member = None, mute_duration: str = "1h", *, reason: str = "No reason provided"):
         """Put a user on leave of absence (no pings allowed, auto-mute if pinged)."""
         
         # If no member specified, use the author
