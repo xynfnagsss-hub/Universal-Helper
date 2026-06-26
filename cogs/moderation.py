@@ -21,6 +21,7 @@ class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.warnings = {}  # {user_id: warning_count}
+        self.loa_users = {}  # {user_id: guild_id} - users on leave of absence
     
     @commands.command(name="kick")
     @commands.has_permissions(kick_members=True)
@@ -109,6 +110,77 @@ class Moderation(commands.Cog):
             await ctx.send(f"❌ Error: {e}")
         except Exception as e:
             await ctx.send(f"❌ Error: {e}")
+    
+    @commands.command(name="loa")
+    @commands.has_permissions(manage_messages=True)
+    async def loa(self, ctx, member: discord.Member, *, reason="No reason provided"):
+        """Put a user on leave of absence (no pings allowed, auto-mute for 1 hour if pinged)."""
+        
+        if member == ctx.author:
+            embed = create_error_embed("You cannot put yourself on LOA!")
+            return await ctx.send(embed=embed, delete_after=5)
+        
+        if member.bot:
+            embed = create_error_embed("You cannot put a bot on LOA!")
+            return await ctx.send(embed=embed, delete_after=5)
+        
+        # Add to LOA list
+        self.loa_users[member.id] = ctx.guild.id
+        
+        embed = discord.Embed(
+            title="🏖️ Leave of Absence",
+            description=f"{member.mention} has been put on LOA.",
+            color=Colors.WARNING,
+            timestamp=discord.utils.utcnow()
+        )
+        embed.add_field(name="👤 User", value=member.mention, inline=True)
+        embed.add_field(name="📝 Reason", value=reason, inline=False)
+        embed.add_field(name="⚠️ Warning", value="Anyone who pings this user will be muted for 1 hour!", inline=False)
+        embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
+        embed.set_footer(text=f"User ID: {member.id}")
+        
+        await ctx.send(embed=embed)
+    
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        """Check if message contains pings to LOA users."""
+        
+        # Ignore bot messages and DMs
+        if message.author.bot or not message.guild:
+            return
+        
+        # Check if message mentions any LOA users
+        for user_id, guild_id in list(self.loa_users.items()):
+            if guild_id != message.guild.id:
+                continue
+            
+            # Check if user is mentioned
+            if any(user.id == user_id for user in message.mentions):
+                # Mute the person who pinged
+                try:
+                    await message.author.timeout(timedelta(hours=1), reason=f"Pinged LOA user {user_id}")
+                    
+                    embed = discord.Embed(
+                        title="🔇 Auto-Mute",
+                        description=f"{message.author.mention} has been muted for 1 hour for pinging an LOA user.",
+                        color=Colors.DANGER,
+                        timestamp=discord.utils.utcnow()
+                    )
+                    embed.add_field(name="⚠️ Reason", value="Pinging LOA user is not allowed", inline=False)
+                    await message.channel.send(embed=embed)
+                except Exception as e:
+                    logger.error(f"Failed to mute user for LOA ping: {e}")
+    
+    @commands.command(name="loa_remove")
+    @commands.has_permissions(manage_messages=True)
+    async def loa_remove(self, ctx, member: discord.Member):
+        """Remove a user from leave of absence."""
+        
+        if member.id in self.loa_users:
+            del self.loa_users[member.id]
+            await ctx.send(f"✅ Removed {member.mention} from LOA.")
+        else:
+            await ctx.send("❌ User is not on LOA.")
     
     @commands.command(name="warn")
     @commands.has_permissions(manage_messages=True)
