@@ -123,6 +123,11 @@ class Moderation(commands.Cog):
             embed = create_error_embed("You cannot put a bot on LOA!")
             return await ctx.send(embed=embed, delete_after=5)
         
+        # Check if bot has timeout permission
+        if not ctx.guild.me.guild_permissions.moderate_members:
+            embed = create_error_embed("I don't have permission to timeout members! Please give me the 'Moderate Members' permission.")
+            return await ctx.send(embed=embed, delete_after=10)
+        
         # Parse mute duration
         duration_map = {
             'm': timedelta(minutes=1),
@@ -177,7 +182,7 @@ class Moderation(commands.Cog):
             
             # Check if user is mentioned
             if any(user.id == user_id for user in message.mentions):
-                # Mute the person who pinged
+                # Mute the person who pinged - regardless of role hierarchy
                 try:
                     await message.author.timeout(mute_duration, reason=f"Pinged LOA user {user_id}")
                     
@@ -190,8 +195,13 @@ class Moderation(commands.Cog):
                     )
                     embed.add_field(name="⚠️ Reason", value="Pinging LOA user is not allowed", inline=False)
                     await message.channel.send(embed=embed)
+                    logger.info(f"Muted {message.author} for pinging LOA user {user_id}")
+                except discord.Forbidden:
+                    await message.channel.send(f"❌ Cannot mute {message.author.mention} - they have higher role than bot!")
+                    logger.error(f"Cannot mute {message.author} - insufficient permissions")
                 except Exception as e:
-                    logger.error(f"Failed to mute user for LOA ping: {e}")
+                    logger.error(f"Failed to mute user for LOA ping: {e}", exc_info=True)
+                    await message.channel.send(f"❌ Error muting user: {e}")
     
     @commands.command(name="loa_remove")
     @commands.has_permissions(manage_messages=True)
