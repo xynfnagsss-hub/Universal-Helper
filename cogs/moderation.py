@@ -197,11 +197,9 @@ class Moderation(commands.Cog):
                     await message.channel.send(embed=embed)
                     logger.info(f"Muted {message.author} for pinging LOA user {user_id}")
                 except discord.Forbidden:
-                    await message.channel.send(f"❌ Cannot mute {message.author.mention} - they have higher role than bot!")
                     logger.error(f"Cannot mute {message.author} - insufficient permissions")
                 except Exception as e:
                     logger.error(f"Failed to mute user for LOA ping: {e}", exc_info=True)
-                    await message.channel.send(f"❌ Error muting user: {e}")
     
     @commands.command(name="loa_remove")
     @commands.has_permissions(manage_messages=True)
